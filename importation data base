@@ -1,0 +1,9 @@
+# @title
+# Download the dataset directly
+!wget https://raw.githubusercontent.com/SteffiPeTaffy/machineLearningAZ/master/Machine%20Learning%20A-Z%20Template%20Folder/Part%204%20-%20Clustering/Section%2024%20-%20K-Means%20Clustering/Mall_Customers.csv
+
+# Read the file
+df = pd.read_csv('Mall_Customers.csv')
+
+# Display the first few lines
+df.head()
