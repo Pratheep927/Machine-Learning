@@ -1,0 +1,42 @@
+# @title
+# Importing libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.metrics import silhouette_score
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import AgglomerativeClustering
+import warnings
+warnings.filterwarnings('ignore')
+%matplotlib inline
+
+# Loading data
+df = pd.read_csv('Mall_Customers.csv')
+
+# Previewing the dataset
+print("Dataset dimensions:", df.shape)
+print("\nPreview of the first few rows:")
+display(df.head())
+
+# Information about data types data
+print("\nData type information:")
+display(df.info())
+
+# Descriptive statistics
+print("\nDescriptive statistics:")
+display(df.describe())
+
+# Checking for missing values
+print("\nChecking for missing values:")
+display(df.isnull().sum())
+
+# Distribution of gender (Male/Female)
+print("\nDistribution of Gender:")
+display(df['Gender'].value_counts())
+
+# Statistic summary by gender
+print("\nStatistical summary by gender:")
+display(df.groupby('Gender').describe())
