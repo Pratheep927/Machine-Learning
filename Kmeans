@@ -1,0 +1,89 @@
+# @title
+# Determining optimal number of clusters using the elbow method
+inertia = []
+k_range = range(1, 11)
+
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(X)
+    inertia.append(kmeans.inertia_)
+
+# Visualizing the elbow method
+plt.figure(figsize=(10, 6))
+plt.plot(k_range, inertia, 'bo-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.title('Elbow Method to Determine the Optimal Number of Clusters')
+plt.grid(True)
+plt.show()
+
+# Calculating silhouette score for different k values
+silhouette_scores = []
+for k in k_range[1:]:  # Start from k=2 as k=1 doesn't have a silhouette score
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    cluster_labels = kmeans.fit_predict(X)
+    silhouette_avg = silhouette_score(X, cluster_labels)
+    silhouette_scores.append(silhouette_avg)
+    print(f"For n_clusters = {k}, the average silhouette score is: {silhouette_avg:.3f}")
+
+# Visualizing the silhouette score
+plt.figure(figsize=(10, 6))
+plt.plot(k_range[1:], silhouette_scores, 'bo-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Average silhouette score')
+plt.title('Silhouette Score for Different Values of k')
+plt.grid(True)
+plt.show()
+
+# Applying K-means with the optimal number of clusters
+optimal_k = 5  # Based on inertia and silhouette score analysis
+kmeans_optimal = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
+y_kmeans = kmeans_optimal.fit_predict(X)
+
+# Adding clusters to the original dataframe
+df_kmeans = df.copy()
+df_kmeans['Cluster_KMeans'] = y_kmeans
+
+# Visualizing clusters for Annual Income vs Spending Score
+plt.figure(figsize=(10, 8))
+for i in range(optimal_k):
+    plt.scatter(df_kmeans[df_kmeans['Cluster_KMeans'] == i]['Annual Income (k$)'],
+                df_kmeans[df_kmeans['Cluster_KMeans'] == i]['Spending Score (1-100)'],
+                s=100, label=f'Cluster {i}')
+
+plt.scatter(kmeans_optimal.cluster_centers_[:, 1], kmeans_optimal.cluster_centers_[:, 2],
+            s=300, c='yellow', marker='*', label='Centroids')
+plt.title('K-means Clustering')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 3D visualization of clusters
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+
+for i in range(optimal_k):
+    ax.scatter(df_kmeans[df_kmeans['Cluster_KMeans'] == i]['Annual Income (k$)'],
+               df_kmeans[df_kmeans['Cluster_KMeans'] == i]['Spending Score (1-100)'],
+               df_kmeans[df_kmeans['Cluster_KMeans'] == i]['Age'],
+               s=100, label=f'Cluster {i}')
+
+ax.set_xlabel('Annual Income (k$)')
+ax.set_ylabel('Spending Score (1-100)')
+ax.set_zlabel('Age')
+plt.title('3D Visualization of K-means Clusters')
+plt.legend()
+plt.show()
+
+# Cluster analysis
+cluster_analysis = df_kmeans.groupby('Cluster_KMeans').agg({
+    'Age': ['mean', 'min', 'max'],
+    'Annual Income (k$)': ['mean', 'min', 'max'],
+    'Spending Score (1-100)': ['mean', 'min', 'max'],
+    'CustomerID': 'count'
+}).round(2)
+
+print("K-means Cluster Analysis:")
+display(cluster_analysis)
