@@ -24,7 +24,7 @@ for col in ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']:
         print("Outlier values:", outliers.values)
 
 # Encoding the categorical variable 'Genre'
-df_processed = pd.get_dummies(df_processed, columns=['Gender'], drop_first=True)
+df_processed = pd.get_dummies(df_processed, columns=['Genre'], drop_first=True)
 print("\nDataset after one-hot encoding:")
 display(df_processed.head())
 
@@ -38,6 +38,6 @@ print("\nDataset after normalization:")
 display(df_scaled.head())
 
 # Preparing data for clustering
-X = df_scaled[['Age', 'Annual Income (k$)', 'Spending Score (1-100)', 'Gender_Male']]
+X = df_scaled[['Age', 'Annual Income (k$)', 'Spending Score (1-100)', 'Genre_Male']]
 print("\nData prepared for clustering:")
 display(X.head())
