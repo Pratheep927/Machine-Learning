@@ -1,0 +1,43 @@
+# @title
+# Creating a copy of the original dataframe
+df_processed = df.copy()
+
+# Checking for duplicates
+duplicates = df_processed.duplicated().sum()
+print(f"Number of duplicates: {duplicates}")
+
+# Outlier detection using IQR method for numerical variables
+def detect_outliers(df, column):
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    outliers = df[(df[column] < lower_bound) | (df[column] > upper_bound)][column]
+    return outliers
+
+# Checking for outliers in each numerical variable
+for col in ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']:
+    outliers = detect_outliers(df_processed, col)
+    print(f"Number of outliers in {col}: {len(outliers)}")
+    if len(outliers) > 0:
+        print("Outlier values:", outliers.values)
+
+# Encoding the categorical variable 'Genre'
+df_processed = pd.get_dummies(df_processed, columns=['Gender'], drop_first=True)
+print("\nDataset after one-hot encoding:")
+display(df_processed.head())
+
+# Normalizing numerical variables
+scaler = StandardScaler()
+columns_to_scale = ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']
+df_scaled = df_processed.copy()
+df_scaled[columns_to_scale] = scaler.fit_transform(df_scaled[columns_to_scale])
+
+print("\nDataset after normalization:")
+display(df_scaled.head())
+
+# Preparing data for clustering
+X = df_scaled[['Age', 'Annual Income (k$)', 'Spending Score (1-100)', 'Gender_Male']]
+print("\nData prepared for clustering:")
+display(X.head())
