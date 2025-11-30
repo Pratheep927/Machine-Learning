@@ -1,0 +1,85 @@
+# @title
+# Determining optimal parameters for DBSCAN
+from sklearn.neighbors import NearestNeighbors
+
+# Determine an appropriate value for eps
+neighbors = NearestNeighbors(n_neighbors=2)
+neighbors_fit = neighbors.fit(X)
+distances, indices = neighbors_fit.kneighbors(X)
+
+# Sort distances for the elbow plot
+distances = np.sort(distances[:, 1])
+
+# Visualization to determine eps
+plt.figure(figsize=(10, 6))
+plt.plot(distances)
+plt.title('Elbow Plot to Determine eps')
+plt.xlabel('Points')
+plt.ylabel('Distance to Nearest Neighbor')
+plt.grid(True)
+plt.show()
+
+# Test different values of eps and min_samples
+eps_values = [0.3, 0.5, 0.7, 1.0]
+min_samples_values = [3, 5, 7, 10]
+
+for eps in eps_values:
+    for min_samples in min_samples_values:
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        y_dbscan = dbscan.fit_predict(X)
+
+        # Number of clusters (excluding noise, which is labeled as -1)
+        n_clusters = len(set(y_dbscan)) - (1 if -1 in y_dbscan else 0)
+        n_noise = list(y_dbscan).count(-1)
+
+        print(f"eps={eps}, min_samples={min_samples}: {n_clusters} clusters, {n_noise} noise points")
+
+        # Calculate silhouette score (only if more than one cluster and not all points are noise)
+        if n_clusters > 1 and n_noise < len(X):
+            # Filter noise points for silhouette score calculation
+            mask = y_dbscan != -1
+            if np.sum(mask) > 1:  # Ensure there are at least two non-noise points
+                silhouette_avg = silhouette_score(X[mask], y_dbscan[mask])
+                print(f"Silhouette score: {silhouette_avg:.3f}")
+
+# Applying DBSCAN model with optimal parameters
+optimal_eps = 0.5
+optimal_min_samples = 5
+dbscan_optimal = DBSCAN(eps=optimal_eps, min_samples=optimal_min_samples)
+y_dbscan = dbscan_optimal.fit_predict(X)
+
+# Adding clusters to the original dataframe
+df_dbscan = df.copy()
+df_dbscan['Cluster_DBSCAN'] = y_dbscan
+
+# Visualization of clusters for Annual Income vs Spending Score
+plt.figure(figsize=(10, 8))
+# Plot noise points in black
+plt.scatter(df_dbscan[df_dbscan['Cluster_DBSCAN'] == -1]['Annual Income (k$)'],
+            df_dbscan[df_dbscan['Cluster_DBSCAN'] == -1]['Spending Score (1-100)'],
+            s=100, c='black', label='Noise')
+
+# Plot clusters
+for i in set(y_dbscan):
+    if i != -1:  # Ignore noise points
+        plt.scatter(df_dbscan[df_dbscan['Cluster_DBSCAN'] == i]['Annual Income (k$)'],
+                    df_dbscan[df_dbscan['Cluster_DBSCAN'] == i]['Spending Score (1-100)'],
+                    s=100, label=f'Cluster {i}')
+
+plt.title('DBSCAN Clustering')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Analysis of DBSCAN clusters
+cluster_analysis_dbscan = df_dbscan.groupby('Cluster_DBSCAN').agg({
+    'Age': ['mean', 'min', 'max'],
+    'Annual Income (k$)': ['mean', 'min', 'max'],
+    'Spending Score (1-100)': ['mean', 'min', 'max'],
+    'CustomerID': 'count'
+}).round(2)
+
+print("DBSCAN Cluster Analysis:")
+display(cluster_analysis_dbscan)
