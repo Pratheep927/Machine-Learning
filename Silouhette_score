@@ -1,0 +1,84 @@
+# Calculating silhouette score for each model
+silhouette_kmeans = silhouette_score(X, y_kmeans)
+print(f"Silhouette score for K-means: {silhouette_kmeans:.3f}")
+
+# For DBSCAN, exclude noise points (-1)
+if len(set(y_dbscan)) > 1 and -1 not in set(y_dbscan):
+    silhouette_dbscan = silhouette_score(X, y_dbscan)
+    print(f"Silhouette score for DBSCAN: {silhouette_dbscan:.3f}")
+elif -1 in set(y_dbscan):
+    mask = y_dbscan != -1
+    if np.sum(mask) > 1 and len(set(y_dbscan[mask])) > 1:
+        silhouette_dbscan = silhouette_score(X[mask], y_dbscan[mask])
+        print(f"Silhouette score for DBSCAN (excluding noise points): {silhouette_dbscan:.3f}")
+    else:
+        print("Unable to calculate silhouette score for DBSCAN: too few clusters or samples")
+else:
+    print("Unable to calculate silhouette score for DBSCAN: only one cluster found")
+
+silhouette_hc = silhouette_score(X, y_hc)
+print(f"Silhouette score for Hierarchical Clustering: {silhouette_hc:.3f}")
+
+# Create a DataFrame to compare cluster assignments
+df_comparison = df.copy()
+df_comparison['KMeans'] = y_kmeans
+df_comparison['DBSCAN'] = y_dbscan
+df_comparison['Hierarchical'] = y_hc
+
+# Calculate the proportion of points in agreement between models
+def calculate_agreement(clusters1, clusters2):
+    """
+    Calculate the proportion of pairs of points that are either in the same cluster
+    or in different clusters in both partitions.
+    """
+    n = len(clusters1)
+    agreement = 0
+    total_pairs = n * (n - 1) // 2
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            # If both models agree (same cluster or different clusters)
+            if (clusters1[i] == clusters1[j] and clusters2[i] == clusters2[j]) or \
+               (clusters1[i] != clusters1[j] and clusters2[i] != clusters2[j]):
+                agreement += 1
+
+    return agreement / total_pairs
+
+# Calculate agreement between models
+agreement_kmeans_dbscan = calculate_agreement(y_kmeans, y_dbscan)
+agreement_kmeans_hc = calculate_agreement(y_kmeans, y_hc)
+agreement_dbscan_hc = calculate_agreement(y_dbscan, y_hc)
+
+print(f"Agreement between K-means and DBSCAN: {agreement_kmeans_dbscan:.3f}")
+print(f"Agreement between K-means and Hierarchical: {agreement_kmeans_hc:.3f}")
+print(f"Agreement between DBSCAN and Hierarchical: {agreement_dbscan_hc:.3f}")
+
+# Comparative visualization of clusters
+fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+
+# K-means
+scatter1 = axes[0].scatter(df['Annual Income (k$)'], df['Spending Score (1-100)'], c=y_kmeans, s=100, cmap='viridis')
+axes[0].set_title('K-means Clustering')
+axes[0].set_xlabel('Annual Income (k$)')
+axes[0].set_ylabel('Spending Score (1-100)')
+axes[0].grid(True)
+fig.colorbar(scatter1, ax=axes[0], label='Cluster')
+
+# DBSCAN
+scatter2 = axes[1].scatter(df['Annual Income (k$)'], df['Spending Score (1-100)'], c=y_dbscan, s=100, cmap='viridis')
+axes[1].set_title('DBSCAN Clustering')
+axes[1].set_xlabel('Annual Income (k$)')
+axes[1].set_ylabel('Spending Score (1-100)')
+axes[1].grid(True)
+fig.colorbar(scatter2, ax=axes[1], label='Cluster')
+
+# Hierarchical Clustering
+scatter3 = axes[2].scatter(df['Annual Income (k$)'], df['Spending Score (1-100)'], c=y_hc, s=100, cmap='viridis')
+axes[2].set_title('Hierarchical Clustering')
+axes[2].set_xlabel('Annual Income (k$)')
+axes[2].set_ylabel('Spending Score (1-100)')
+axes[2].grid(True)
+fig.colorbar(scatter3, ax=axes[2], label='Cluster')
+
+plt.tight_layout()
+plt.show()
