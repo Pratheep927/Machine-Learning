@@ -1,0 +1,43 @@
+# @title
+# Creating a dendrogram to determine the optimal number of clusters
+plt.figure(figsize=(12, 8))
+dendrogram = dendrogram(linkage(X, method='ward'))
+plt.title('Hierarchical Clustering Dendrogram')
+plt.xlabel('Sample Indices')
+plt.ylabel('Distances')
+plt.axhline(y=6, color='r', linestyle='--')  # Line to indicate a possible cut
+plt.show()
+
+# Applying hierarchical clustering with the optimal number of clusters
+optimal_clusters_hc = 5  # Based on dendrogram analysis
+hierarchical_clustering = AgglomerativeClustering(n_clusters=optimal_clusters_hc, linkage='ward')
+y_hc = hierarchical_clustering.fit_predict(X)
+
+# Adding clusters to the original dataframe
+df_hc = df.copy()
+df_hc['Cluster_Hierarchical'] = y_hc
+
+# Visualizing clusters for Annual Income vs Spending Score
+plt.figure(figsize=(10, 8))
+for i in range(optimal_clusters_hc):
+    plt.scatter(df_hc[df_hc['Cluster_Hierarchical'] == i]['Annual Income (k$)'],
+                df_hc[df_hc['Cluster_Hierarchical'] == i]['Spending Score (1-100)'],
+                s=100, label=f'Cluster {i}')
+
+plt.title('Hierarchical Clustering')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Analysis of hierarchical clustering clusters
+cluster_analysis_hc = df_hc.groupby('Cluster_Hierarchical').agg({
+    'Age': ['mean', 'min', 'max'],
+    'Annual Income (k$)': ['mean', 'min', 'max'],
+    'Spending Score (1-100)': ['mean', 'min', 'max'],
+    'CustomerID': 'count'
+}).round(2)
+
+print("Hierarchical Clustering Cluster Analysis:")
+display(cluster_analysis_hc)
