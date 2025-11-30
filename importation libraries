@@ -35,8 +35,8 @@ display(df.isnull().sum())
 
 # Distribution of gender (Male/Female)
 print("\nDistribution of Gender:")
-display(df['Gender'].value_counts())
+display(df['Genre'].value_counts())
 
 # Statistic summary by gender
 print("\nStatistical summary by gender:")
-display(df.groupby('Gender').describe())
+display(df.groupby('Genre').describe())
